@@ -47,6 +47,7 @@ int main(void) {
 
   int val;
   parser.parse(" (1 + 2) * 3 ", val);
+  parser.parse("1 + ", val);
 
   std::cout << val << "\n";
 
