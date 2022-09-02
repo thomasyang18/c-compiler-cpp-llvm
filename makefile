@@ -11,11 +11,13 @@ SUF = cpp
 CC = clang++
 CORE = -MMD -MP -I$(INCDIR)
 
+# pthread core because PegLib needs it
+
 # optional flags
 #manually define `llvm-config --cxxflags` for c++17
 CXXFLAGS = -I/usr/lib/llvm-10/include -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 LLVM = --ldflags --system-libs --libs core
-CFLAGS = $(CORE) $(CXXFLAGS) `llvm-config $(LLVM)`
+CFLAGS = $(CORE) $(CXXFLAGS) -fPIE `llvm-config $(LLVM)`
 
 
 src = $(shell find $(SRCDIR) -name '*.$(SUF)')
@@ -24,39 +26,42 @@ dep = $(obj:.o=.d)
 dirs = $(sort $(dir $(obj)))
 
 all:
-	make folders \
-
+	make folders
 	make $(TAR_NAME)
 
 folders:
-	mkdir -p $(OBJDIR) \
-
-	mkdir -p $(OBJDIR)/unit_tests \
-	
-	mkdir -p $(dirs) \
-
-$(TAR_NAME):
-	make $(TARGET)
-
-$(TARGET): $(obj)
-	$(CC) $(CFLAGS) $^ -o $@
+	mkdir -p $(OBJDIR)
+	mkdir -p $(dirs)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.$(SUF)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# add scripts here (add target to phony list as needed)
+# Main link
 
-bin/unit_tests/%.o: unit_tests/%.cpp
-	g++ -g -Wall $(CORE) -std=c++17 -c $< -o $@
+$(OBJDIR)/main.o: drivers/main.$(SUF)
+	$(CC) $(CFLAGS) -c $< -o $@
 
-unit_test: bin/unit_tests/parser_driver.o	
-	g++ -g -Wall $(CORE) -pthread -std=c++17 $^ -lgtest  -lgtest_main  -o bin/$@
+$(TAR_NAME):
+	make $(TARGET)
+
+$(TARGET): $(obj) $(OBJDIR)/main.o
+	$(CC) $(CFLAGS) $^ -o $@
+
+# Test link
+
+# todo: clean this up but probably fine
+
+bin/%.o: unit_tests/%.cpp
+	g++ -g -Wall -fPIE $(CORE) -pthread -std=c++17 -c $< -o $@
+
+unit_test: bin/parser_driver.o $(obj)
+	g++ -g -Wall -fPIE $(CORE) -pthread -std=c++17 $^ -lgtest  -lgtest_main  -o bin/$@ && ./bin/$@
 
 # -------------------utils---------------------
 
 -include $(dep) 
 
-.PHONY: clean prints $(TAR_NAME) unit_test folders
+.PHONY: clean prints $(TAR_NAME) unit_test folders grammar
 
 clean:
 	rm -rf $(OBJDIR) \

@@ -1,0 +1,39 @@
+# https://github.com/BNFC/bnfc/blob/383d1a64fa799554d2d786d0b437ab15e5a93d8e/examples/C/C4.cf
+
+Progr   <- "int" "main" "(" ")" "{" StmList "}"
+
+Dec         <- Type IdentList
+
+IdentList   <-  Ident "," IdentList
+            /   Ident
+
+StmList     <- Stm StmList
+            / %whitespace
+
+
+Stm         <- "{" StmList "}"
+            / Dec ";"
+            / Ident "=" Exp ";"
+            / "if" "(" Exp ")" Stm "else" Stm
+            / "if" "(" Exp ")" Stm
+            / "while" "(" Exp ")" Stm
+            / "return" Exp ";" 
+            / Exp ";"
+            / ";"
+
+Exp         <-  Term ('==' / '&&' / '||' / '>' / '<' / [-+*/]) Exp
+                / '(' Exp ')'
+                / Term
+
+Term        <-  Ident
+                / Number
+
+Type       <- "int"
+
+Ident <- < [a-zA-Z_][a-zA-Z0-9_]* >
+Number <- < '0' / [1-9][0-9]* >
+
+
+# Whitespace Characters
+%whitespace <- [ \t\v\n\f\r]*
+%word <- [a-zA-Z_][a-zA-Z0-9_]*
