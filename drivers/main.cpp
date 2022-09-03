@@ -1,54 +1,31 @@
-// (1) Include the header file
-#include <peglib.h>
-#include <assert.h>
-#include <iostream>
+#include <fstream>
+#include <stdexcept>
+#include "parser.hpp"
+#include "analyzer.hpp"
 
-using namespace peg;
-using namespace std;
+static std::string get_file_as_string(std::string file){
+  std::ifstream t(file);
+  std::cout << " Yo " << file << '\n';
+  assert (t.is_open());
+  std::stringstream buffer;
+  buffer << t.rdbuf();
+  return buffer.str();
+}
 
-int main(void) {
-  // (2) Make a parser
-  parser parser(R"(
-    # Grammar for Calculator...
-    Additive    <- Multitive '+' Additive / Multitive
-    Multitive   <- Primary '*' Multitive / Primary
-    Primary     <- '(' Additive ')' / Number
-    Number      <- < [0-9]+ >
-    %whitespace <- [ \t]*
-  )");
+int main(int argc, char **argv) {
+  
+  //if (argc != 2) throw std::invalid_argument(" Need exactly one file argument ");
+  
+  std::unique_ptr<peg::parser> parser = std::move(new_parser());
 
+  parser->enable_ast();
+  
+  std::shared_ptr<peg::Ast> ast;
+  if(parser->parse("int main(){int y, y;}", ast)){
+    std::cout << "before " << std::endl;
+    ast = parser->optimize_ast(ast);
+    std::cout << "after " << std::endl;
 
-  // (3) Setup actions
-  parser["Additive"] = [](const SemanticValues &vs) {
-    switch (vs.choice()) {
-    case 0: // "Multitive '+' Additive"
-      return any_cast<int>(vs[0]) + any_cast<int>(vs[1]);
-    default: // "Multitive"
-      return any_cast<int>(vs[0]);
-    }
-  };
-
-  parser["Multitive"] = [](const SemanticValues &vs) {
-    switch (vs.choice()) {
-    case 0: // "Primary '*' Multitive"
-      return any_cast<int>(vs[0]) * any_cast<int>(vs[1]);
-    default: // "Primary"
-      return any_cast<int>(vs[0]);
-    }
-  };
-
-  parser["Number"] = [](const SemanticValues &vs) {
-    return vs.token_to_number<int>();
-  };
-
-  // (4) Parse
-  parser.enable_packrat_parsing(); // Enable packrat parsing.
-
-  int val;
-  parser.parse(" (1 + 2) * 3 ", val);
-  parser.parse("1 + ", val);
-
-  std::cout << val << "\n";
-
-  assert(val == 9);
+    definition_ordering(ast);
+  }
 }

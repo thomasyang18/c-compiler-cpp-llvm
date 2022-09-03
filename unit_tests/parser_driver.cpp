@@ -21,7 +21,7 @@ TEST_P(ParseCorrectFixture, FileParsesCorrectly) {
 // Note that this only guarantees that it PARSES correctly, not that it's semantically correct.
 
 INSTANTIATE_TEST_SUITE_P(
-  CorrectBasicSubset,
+  CorrectBasicSubsetParse,
   ParseCorrectFixture,
   ::testing::Values(
     "int main () {}",
@@ -41,7 +41,8 @@ INSTANTIATE_TEST_SUITE_P(
     "int main() {if (1) return 1; else return 1;}",    
     "int main() {if (1) if (2) return 2; else return 2; else return 1;}",
     "int main() {while (1) {while (2) x = 3; }}",
-    "int main() {int x, y, z; x = 3; y = 2; z = x+y; int a,b,c;}"
+    "int main() {int x, y, z; x = 3; y = 2; z = x+y; int a,b,c;}",
+    "int main() {int x; x = 3; int x;}"
   ));
 
 /** 
@@ -63,7 +64,7 @@ TEST_P(ParseFailFixture, FileParsesIncorrectly) {
 // Note that this only guarantees that it PARSES correctly, not that it's semantically correct.
 
 INSTANTIATE_TEST_SUITE_P(
-  FailBasicSubset,
+  FailBasicSubsetParse,
   ParseFailFixture,
   ::testing::Values(
     "intmain(){}",

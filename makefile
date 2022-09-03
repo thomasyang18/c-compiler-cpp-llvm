@@ -8,17 +8,17 @@ TARGET = $(OBJDIR)/$(TAR_NAME)
 
 #core
 SUF = cpp
-CC = clang++
+CC = g++
 CORE = -MMD -MP -I$(INCDIR)
 
 # pthread core because PegLib needs it
 
 # optional flags
-#manually define `llvm-config --cxxflags` for c++17
-CXXFLAGS = -I/usr/lib/llvm-10/include -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+#manually define `llvm-config --cxxflags` for c++17, and allow exceptions
+#CXXFLAGS = -I/usr/lib/llvm-10/include -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 LLVM = --ldflags --system-libs --libs core
-CFLAGS = $(CORE) $(CXXFLAGS) -fPIE `llvm-config $(LLVM)`
-
+LLVM_FLAGS = `llvm-config $(LLVM)`
+CFLAGS = $(CORE) -g -std=c++17 -pthread 
 
 src = $(shell find $(SRCDIR) -name '*.$(SUF)')
 obj = $(patsubst $(SRCDIR)/%.$(SUF), $(OBJDIR)/%.o, $(src))
@@ -44,24 +44,32 @@ $(OBJDIR)/main.o: drivers/main.$(SUF)
 $(TAR_NAME):
 	make $(TARGET)
 
-$(TARGET): $(obj) $(OBJDIR)/main.o
+$(TARGET): $(OBJDIR)/main.o $(obj) 
 	$(CC) $(CFLAGS) $^ -o $@
 
 # Test link
 
-# todo: clean this up but probably fine
+# todo: add dependencies and clean up a little maybe
+
+UNIT_SRC = $(wildcard unit_tests/*.cpp)
+UNIT_OBJ = $(patsubst unit_tests/%.cpp, $(OBJDIR)/%.o, $(UNIT_SRC))
 
 bin/%.o: unit_tests/%.cpp
 	g++ -g -Wall -fPIE $(CORE) -pthread -std=c++17 -c $< -o $@
 
-unit_test: bin/parser_driver.o $(obj)
+unit_test: $(UNIT_OBJ) $(obj)
 	g++ -g -Wall -fPIE $(CORE) -pthread -std=c++17 $^ -lgtest  -lgtest_main  -o bin/$@ && ./bin/$@
+
+# Graph debugging
+
+graph_debug:
+	c-compiler | python3 graph_viz.py | dot -Tpng -o out.png
 
 # -------------------utils---------------------
 
 -include $(dep) 
 
-.PHONY: clean prints $(TAR_NAME) unit_test folders grammar
+.PHONY: clean prints $(TAR_NAME) unit_test folders grammar graph_debug
 
 clean:
 	rm -rf $(OBJDIR) \
