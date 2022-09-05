@@ -1,6 +1,7 @@
 # https://github.com/BNFC/bnfc/blob/383d1a64fa799554d2d786d0b437ab15e5a93d8e/examples/C/C4.cf
+# A subset of the above already small subset, that accepts one function called "main", consisting of if/while statements, expressions, and int types/variables.
 
-Progr   <- Type Ident "(" ")" "{" StmList "}"
+Progr   <- "int" "main" "(" ")" Block
 
 Dec         <- Type IdentList
 
@@ -10,8 +11,9 @@ IdentList   <-  Ident "," IdentList
 StmList     <- Stm StmList
             / %whitespace
 
+Block       <- "{" StmList "}"
 
-Stm         <- "{" StmList "}"
+Stm         <- Block
             / Dec ";"
             / Ident "=" Exp ";"
             / "if" "(" Exp ")" Stm "else" Stm

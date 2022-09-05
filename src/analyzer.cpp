@@ -1,14 +1,13 @@
 #include "analyzer.hpp"
 #include "parser.hpp"
+#include "symbol_table.hpp"
 #include <stdexcept>
 #include <set>
 
-std::set<std::string_view> declared;
+std::unique_ptr<SymbolTable> sym;
 
 void reset_driver(){
-    declared.clear();
-    // bad hackaround until i can start declaring functions
-    declared.insert("main");
+    sym.reset(new SymbolTable());
 }
 
 /**
@@ -17,7 +16,9 @@ void reset_driver(){
  */
 
 void definition_ordering(std::shared_ptr<peg::Ast> ast, defOrderMode mode){
-   // ENTER_GRAPH(ast)
+ //   ENTER_GRAPH(ast)
+
+   if (ast->name == "Block") sym->IncScope();
 
     if (mode == look_for_uses){
 
@@ -30,7 +31,7 @@ void definition_ordering(std::shared_ptr<peg::Ast> ast, defOrderMode mode){
         }
         else {
             if (ast->name == "Ident"){
-                if (!declared.count(ast->token)) {
+                if (!(*sym)[ast->token]) {
                 std::string error = "Ident ";
                 error += ast->token;
                 error += " doesn't exist yet";
@@ -41,13 +42,13 @@ void definition_ordering(std::shared_ptr<peg::Ast> ast, defOrderMode mode){
     }
     else if (mode == look_for_defs){
         if (ast->name == "Ident"){
-            if (declared.count(ast->token)) {
+            if (!sym->add_def(ast->token)) {
             std::string error = "Ident ";
             error += ast->token;
             error += " already exists";
             throw std::invalid_argument(error);
             }
-            declared.insert(ast->token);
+            
         }    
     }
 
@@ -57,5 +58,8 @@ void definition_ordering(std::shared_ptr<peg::Ast> ast, defOrderMode mode){
     }   
 
 
-//    EXIT_GRAPH(ast)
+   if (ast->name == "Block") sym->DecScope();
+
+
+ //   EXIT_GRAPH(ast)
 }

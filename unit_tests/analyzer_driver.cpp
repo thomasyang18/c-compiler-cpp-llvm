@@ -20,7 +20,7 @@ class AnalyzeCorrectFixture : public ::testing::TestWithParam<std::string> {
 TEST_P(AnalyzeCorrectFixture, FileAnalyzesCorrectly) {
   std::shared_ptr<peg::Ast> ast;
   ASSERT_TRUE(parser->parse(GetParam(), ast));
-  ast = parser->optimize_ast(ast);
+ // ast = parser->optimize_ast(ast);
   EXPECT_NO_THROW(definition_ordering(ast));
 }
 
@@ -32,7 +32,9 @@ INSTANTIATE_TEST_SUITE_P(
   ::testing::Values(
     "int main(){int x, y;}",
     "int main(){int x; int y; int z;}",
-    "int main(){if (1) {int x; x = 3;} else {int x; x = 4;}}"
+    "int main(){if (1) {int x; x = 3;} else {int x; x = 4;}}",
+    "int main(){while (3) {int x; int y;} int x, y;}",
+    "int main(){int x; if (4) {int x;} }"
   ));
 
 /** 
@@ -52,7 +54,7 @@ class AnalyzeFailFixture : public ::testing::TestWithParam<std::string> {
 TEST_P(AnalyzeFailFixture, FileAnalyzesIncorrectly) {
   std::shared_ptr<peg::Ast> ast;
   ASSERT_TRUE(parser->parse(GetParam(), ast));
-  ast = parser->optimize_ast(ast);
+//  ast = parser->optimize_ast(ast);
   EXPECT_ANY_THROW(definition_ordering(ast));
 }
 
@@ -65,5 +67,6 @@ INSTANTIATE_TEST_SUITE_P(
     "int main(){int y, y;}",
     "int main(){int x; x = 3; int x;}",
     "int main(){x = 3; int x;}",
-    "int main(){x = 2;}"
+    "int main(){x = 2;}",
+    "int main(){int x; if (1) int x;}"
   ));

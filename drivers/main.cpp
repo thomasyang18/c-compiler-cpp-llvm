@@ -21,11 +21,10 @@ int main(int argc, char **argv) {
   parser->enable_ast();
   
   std::shared_ptr<peg::Ast> ast;
-  if(parser->parse("int main(){int y, y;}", ast)){
-    std::cout << "before " << std::endl;
-    ast = parser->optimize_ast(ast);
-    std::cout << "after " << std::endl;
-
+  if(parser->parse(
+    "int main(){if (1) {int x; x = 3;} else {int x; x = 4;}}", ast)){
+    //ast = parser->optimize_ast(ast);
+    reset_driver();
     definition_ordering(ast);
   }
 }
