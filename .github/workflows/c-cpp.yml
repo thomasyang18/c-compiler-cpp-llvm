@@ -3,10 +3,10 @@ name: C++ CI/CD
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -20,6 +20,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y g++ libgtest-dev cmake build-essential
+
+    - name: Download cpp-peglib header
+      run: |
+        mkdir -p include
+        curl -L https://raw.githubusercontent.com/yhirose/cpp-peglib/master/peglib.h -o include/peglib.h
 
     - name: Set up GTest
       run: |
