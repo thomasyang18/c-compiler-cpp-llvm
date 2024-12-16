@@ -1,0 +1,41 @@
+name: C++ CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v3
+
+    - name: Set up C++ compiler and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y g++ libgtest-dev cmake build-essential
+
+    - name: Set up GTest
+      run: |
+        cd /usr/src/gtest
+        sudo cmake .
+        sudo make
+        sudo cp lib/*.a /usr/lib
+
+    - name: Build project
+      run: |
+        make all
+
+    - name: Run unit tests
+      run: |
+        make unit_test
+
+    - name: Cleanup
+      run: |
+        make clean
